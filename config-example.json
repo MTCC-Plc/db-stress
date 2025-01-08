@@ -1,0 +1,13 @@
+{
+  "connection": {
+    "provider": "mssql",
+    "connectionString": "sqlserver://username:password@localhost?database=dbname",
+    "mode": "series"
+  },
+  "tests": [
+    {
+      "query": "SELECT * FROM users",
+      "iterations": 100
+    }
+  ]
+}
