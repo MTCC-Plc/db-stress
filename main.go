@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	_ "github.com/lib/pq"
 	_ "github.com/microsoft/go-mssqldb"
 )
 
@@ -50,7 +51,11 @@ func main() {
 }
 
 func loadConfig() error {
-	configFile, err := os.Open("config.json")
+	configFileName := "config.json"
+	if len(os.Args) > 1 {
+		configFileName = os.Args[1]
+	}
+	configFile, err := os.Open(configFileName)
 	if err != nil {
 		return err
 	}
@@ -82,7 +87,7 @@ func runWorkers(test Test) error {
 			fmt.Println("WORKERS:\t", test.Workers)
 		}
 	}
-	workerTotal := time.Duration(0)
+	start := time.Now()
 	var wg sync.WaitGroup
 	perWorker := test.Iterations / test.Workers
 	remainder := test.Iterations % test.Workers
@@ -102,12 +107,10 @@ func runWorkers(test Test) error {
 			if i != 0 && i == test.Workers-1 {
 				iterationEnd += remainder
 			}
-			runnerTotal, err := runner(conn, test, iterationStart, iterationEnd)
-
+			err := runner(conn, test, iterationStart, iterationEnd)
 			if err != nil {
 				log.Println("runner", err.Error())
 			}
-			workerTotal += runnerTotal
 		}()
 	}
 	wg.Wait()
@@ -119,24 +122,25 @@ func runWorkers(test Test) error {
 			fmt.Println("WORKERS:\t", test.Workers)
 		}
 	}
-	fmt.Print("\tTime: ", workerTotal, "\n")
-	fmt.Print("\tAverage Time: ", workerTotal/time.Duration(test.Iterations), "\n")
+	since := time.Since(start)
+	fmt.Print("\tTime: ", since, "\n")
+	fmt.Print("\tAverage Time: ", since/time.Duration(test.Iterations), "\n")
 	return nil
 }
 
-func runner(conn *sql.DB, test Test, iterationStart int, iterationEnd int) (time.Duration, error) {
+func runner(conn *sql.DB, test Test, iterationStart int, iterationEnd int) error {
 	runnerTotal := time.Duration(0)
 	for i := iterationStart; i < iterationEnd; i++ {
 		start := time.Now()
 		_, err := conn.Exec(test.Query)
 		if err != nil {
-			return runnerTotal, err
+			return err
 		}
 		since := time.Since(start)
 		runnerTotal += since
 		progressUpdate(i, since, runnerTotal)
 	}
-	return runnerTotal, nil
+	return nil
 }
 
 func progressUpdate(i int, iterationTime time.Duration, totalTime time.Duration) {

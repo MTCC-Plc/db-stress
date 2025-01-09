@@ -2,7 +2,14 @@ module github.com/MTCC-Plc/db-stress
 
 go 1.23.3
 
-require github.com/microsoft/go-mssqldb v1.8.0
+godebug (
+	x509negativeserial=1
+)
+
+require (
+	github.com/lib/pq v1.10.9
+	github.com/microsoft/go-mssqldb v1.8.0
+)
 
 require (
 	github.com/golang-sql/civil v0.0.0-20220223132316-b832511892a9 // indirect
