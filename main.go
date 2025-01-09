@@ -22,7 +22,7 @@ var (
 func main() {
 	err = loadConfig()
 	if err != nil {
-		log.Println("loading config", err.Error())
+		log.Println("Loading config: ", err.Error())
 	}
 	start := time.Now()
 	if config.Mode == "parallel" {
