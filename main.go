@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"log"
 	"os"
@@ -14,16 +15,23 @@ import (
 )
 
 var (
+	configFileName string
 	config         Config
 	err            error
 	lastUpdateUnix int64
 )
+
+func init() {
+	flag.StringVar(&configFileName, "c", "config.json", "Config file name")
+	flag.Parse()
+}
 
 func main() {
 	err = loadConfig()
 	if err != nil {
 		log.Println("Loading config: ", err.Error())
 	}
+	fmt.Println(config.Label)
 	start := time.Now()
 	if config.Mode == "parallel" {
 		fmt.Println("Running", len(config.Tests), "tests in parallel")
@@ -51,10 +59,6 @@ func main() {
 }
 
 func loadConfig() error {
-	configFileName := "config.json"
-	if len(os.Args) > 1 {
-		configFileName = os.Args[1]
-	}
 	configFile, err := os.Open(configFileName)
 	if err != nil {
 		return err
@@ -123,8 +127,12 @@ func runWorkers(test Test) error {
 		}
 	}
 	since := time.Since(start)
+	average := since / time.Duration(test.Iterations)
 	fmt.Print("\tTime: ", since, "\n")
-	fmt.Print("\tAverage Time: ", since/time.Duration(test.Iterations), "\n")
+	fmt.Print("\tAverage Time: ", average, "\n")
+	if config.Log {
+		logToCSV(test, since, average)
+	}
 	return nil
 }
 
@@ -155,4 +163,30 @@ func progressUpdate(i int, iterationTime time.Duration, totalTime time.Duration)
 	iteration := i + 1
 	fmt.Print("\033[u\033[K")
 	fmt.Print("\tIteration: ", iteration, ", Iteration Time: ", iterationTime, ", Average Time: ", totalTime/time.Duration(iteration))
+}
+
+func logToCSV(test Test, totalTime time.Duration, averageTime time.Duration) {
+	f, err := os.OpenFile("log.csv", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		log.Println(err.Error())
+	}
+	defer f.Close()
+	if err != nil {
+		log.Println(err.Error())
+	}
+	// if file is empty, add headers
+	fi, err := f.Stat()
+	if err != nil {
+		log.Println(err.Error())
+	}
+	if fi.Size() == 0 {
+		if _, err := f.WriteString("Timestamp,Label,Query,Iterations,Workers,Total Time,Average Time\n"); err != nil {
+			log.Println(err.Error())
+		}
+	}
+	if _, err := f.WriteString(fmt.Sprintf("%s,\"%s\",\"%s\",%d,%d,%s,%s\n",
+		time.Now().Format(time.RFC3339), config.Label, test.Query, test.Iterations,
+		test.Workers, totalTime, averageTime)); err != nil {
+		log.Println(err.Error())
+	}
 }

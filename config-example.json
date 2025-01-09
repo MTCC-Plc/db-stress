@@ -1,13 +1,16 @@
 {
+  "label": "Testing DB1",
+  "mode": "series",
+  "log": false,
   "connection": {
     "provider": "mssql",
-    "connectionString": "sqlserver://username:password@localhost?database=dbname",
-    "mode": "series"
+    "connectionString": "sqlserver://username:password@localhost?database=dbname"
   },
   "tests": [
     {
       "query": "SELECT * FROM users",
-      "iterations": 100
+      "iterations": 1000,
+      "workers": 1
     }
   ]
 }

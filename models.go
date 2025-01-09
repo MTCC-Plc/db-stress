@@ -1,8 +1,10 @@
 package main
 
 type Config struct {
+	Label      string     `json:"label"`
 	Connection Connection `json:"connection"`
 	Mode       string     `json:"mode"`
+	Log        bool       `json:"log"`
 	Tests      []Test     `json:"tests"`
 }
 

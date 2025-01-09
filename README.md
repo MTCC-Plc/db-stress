@@ -18,21 +18,23 @@ Run
 ./db-stress
 ```
 
-By default, loads the config from `config.json`. Can also pass config file name as the first argument.
+By default, loads the config from `config.json`. Can also pass config file name as an argument.
 
 ```bash
-./db-stress anotherconfig.json
+./db-stress -c anotherconfig.json
 ```
 
 ### Config
 
 ```json
 {
+  "label": "Testing DB1", // label for the tests, optional
+  "mode": "series", // test running mode, optional, default: series
+  "log": false, // whether to log the results to a csv file, optional, default: false
   "connection": {
     "provider": "mssql", // database provider, required
     "connectionString": "sqlserver://username:password@localhost?database=dbname" // database connection string, required
   },
-  "mode": "series", // test running mode, optional, default: series
   "tests": [
     {
       "query": "SELECT * FROM users", // sql query, required
@@ -45,4 +47,4 @@ By default, loads the config from `config.json`. Can also pass config file name 
 
 Currently supported providers are `mssql` and `postgres`. But adding support for another database would be as simple as adding a driver to the imports.
 
-If the `mode` config is in `series`, the tests will run one after the other. If it is in "parallel", the tests will run concurrently.
+If the `mode` config is in `series`, the tests will run one after the other. If it is in `parallel`, the tests will run concurrently.
